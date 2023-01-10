@@ -180,7 +180,7 @@ public class drive extends SubsystemBase {
   }
 
 
-  public double nativeDistanceInMeters(double sensorCounts)
+  public double leftNativeDistanceInMeters(double sensorCounts)
   {
     double motorRotations = leftMotor.getSelectedSensorPosition() / DriveConstants.kCountsPerRev;
     double wheelRotations  = motorRotations / DriveConstants.kGearRatio;
@@ -189,7 +189,16 @@ public class drive extends SubsystemBase {
 
     return positionMeters;
 
+  }
 
+  public double rightNativeDistanceInMeters(double sensorCounts)
+  {
+    double motorRotations = rightMotor.getSelectedSensorPosition() / DriveConstants.kCountsPerRev;
+    double wheelRotations  = motorRotations / DriveConstants.kGearRatio;
+
+    double positionMeters = wheelRotations * (2 * Math.PI * Units.inchesToMeters(DriveConstants.kWheelRadiusInches));
+
+    return positionMeters;
 
   }
 
@@ -212,7 +221,7 @@ public class drive extends SubsystemBase {
   public void periodic() {
     Rotation2d gyroAngle = gyro.getRotation2d();
     SmartDashboard.putNumber("test gyro", gyroAngle.getDegrees());
-    m_odometry.update(gyroAngle, leftMotor.getSelectedSensorPosition(), rightMotor.getSelectedSensorPosition());
+    m_odometry.update(gyroAngle, leftNativeDistanceInMeters(leftMotor.getSelectedSensorPosition()), rightNativeDistanceInMeters(rightMotor.getSelectedSensorPosition()));
 
     SmartDashboard.putNumber("Pose Meters X", m_odometry.getPoseMeters().getX());
     SmartDashboard.putNumber("Pose Meters Y", m_odometry.getPoseMeters().getY());
