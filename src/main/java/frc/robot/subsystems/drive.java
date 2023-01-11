@@ -10,6 +10,8 @@ import com.ctre.phoenix.sensors.WPI_Pigeon2;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -39,6 +41,18 @@ public class drive extends SubsystemBase {
 
   DifferentialDrive drive = new DifferentialDrive(leftMotor, rightMotor);
 
+
+  public ChassisSpeeds chassisSpeeds = new ChassisSpeeds(2.0, 0, 1.0);
+
+  DifferentialDriveWheelSpeeds wheelSpeeds = DriveConstants.kDriveKinematics.toWheelSpeeds(chassisSpeeds);
+
+  
+  public double leftVelocity = wheelSpeeds.leftMetersPerSecond,
+         rightVelocity = wheelSpeeds.rightMetersPerSecond;
+  
+
+        
+
   private final DifferentialDriveOdometry m_odometry;
 
   /** Creates a new drive. */
@@ -53,8 +67,8 @@ public class drive extends SubsystemBase {
 
     setBreakMode();
 
-    rightMotor.configSelectedFeedbackCoefficient(DriveConstants.kGearRatio);
-    leftMotor.configSelectedFeedbackCoefficient(DriveConstants.kGearRatio);
+    //rightMotor.configSelectedFeedbackCoefficient(1/DriveConstants.kGearRatio);
+    //leftMotor.configSelectedFeedbackCoefficient(1/DriveConstants.kGearRatio);
 
     
     
@@ -81,22 +95,31 @@ public class drive extends SubsystemBase {
      * leftRear.follow(leftFront);
      */
 
-    leftMotor.setInverted(false);
-    rightMotor.setInverted(false);
-
     gyro.setYaw(0);
     gyro.configFactoryDefault();
+    leftMotor.setInverted(true);
     
     resetEncoders();
 
-    m_odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), 0, 0);
-    m_odometry.resetPosition(gyro2D, 0, 0, null);
+    m_odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), leftNativeDistanceInMeters(leftMotor.getSelectedSensorPosition()), 
+    rightNativeDistanceInMeters(rightMotor.getSelectedSensorPosition()));
+
+    m_odometry.resetPosition(gyro2D, 0, 0, getPose());
+
+  }
+
+  public void arcadeDrive(double leftSpeed, double rightSpeed)
+  {
+    leftMotor.setInverted(true);
+    drive.arcadeDrive(leftSpeed, rightSpeed);
 
   }
 
   public void move(double leftSpeed, double rightSpeed) {
     leftMotor.setInverted(true);
     drive.tankDrive(leftSpeed, rightSpeed);
+
+  
 
   }
 
@@ -141,11 +164,11 @@ public class drive extends SubsystemBase {
   }
 
   public double getRightEncoderVelocity() {
-    return -rightMotor.getSelectedSensorVelocity();
-  }
+    return leftVelocity;
+    }
 
   public double getLeftEncoderVelocity() {
-    return -leftMotor.getSelectedSensorVelocity();
+    return rightVelocity;
   }
 
   public Pose2d getPose() {
@@ -187,7 +210,7 @@ public class drive extends SubsystemBase {
 
     double positionMeters = wheelRotations * (2 * Math.PI * Units.inchesToMeters(DriveConstants.kWheelRadiusInches));
 
-    return positionMeters;
+    return -positionMeters;
 
   }
 
@@ -198,7 +221,7 @@ public class drive extends SubsystemBase {
 
     double positionMeters = wheelRotations * (2 * Math.PI * Units.inchesToMeters(DriveConstants.kWheelRadiusInches));
 
-    return positionMeters;
+    return -positionMeters;
 
   }
 
@@ -219,6 +242,8 @@ public class drive extends SubsystemBase {
 
   @Override
   public void periodic() {
+    
+    
     Rotation2d gyroAngle = gyro.getRotation2d();
     SmartDashboard.putNumber("test gyro", gyroAngle.getDegrees());
     m_odometry.update(gyroAngle, leftNativeDistanceInMeters(leftMotor.getSelectedSensorPosition()), rightNativeDistanceInMeters(rightMotor.getSelectedSensorPosition()));
@@ -230,11 +255,9 @@ public class drive extends SubsystemBase {
     
 
     
-    SmartDashboard.putNumber("Left Encoder Position", getLeftEncoderPostion() / 1.0000);
-    SmartDashboard.putNumber("Right Encoder Position", getRightEncoderPostion() / 1.0000);
+    SmartDashboard.putNumber("Left Encoder Position", leftNativeDistanceInMeters(leftMotor.getSelectedSensorPosition()));
+    SmartDashboard.putNumber("Right Encoder Position", rightNativeDistanceInMeters(rightMotor.getSelectedSensorPosition()));
 
-    SmartDashboard.putNumber("Left Encoder meter", getLeftEncoderPostion() / DriveConstants.kMeterConversionAccurate);
-    SmartDashboard.putNumber("Right Encoder meter", getRightEncoderPostion() / DriveConstants.kMeterConversionAccurate);
 
     SmartDashboard.putNumber("Right Encoder Velocity", getRightEncoderVelocity());
     SmartDashboard.putNumber("Left Encoder Velocity", getLeftEncoderVelocity());

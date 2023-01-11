@@ -2,7 +2,9 @@
 package frc.robot;
 
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants 
@@ -73,7 +75,7 @@ public final class Constants
         
         kCountsPerRev = 2048;
 
-
+        public static final DifferentialDriveKinematics kDriveKinematics = new DifferentialDriveKinematics(kTrackWidthMeters);
 
 
 
@@ -90,7 +92,8 @@ public final class Constants
         // 6.56168333 
         // 10.14
          
-        public static final DifferentialDriveKinematics kDriveKinematics = new DifferentialDriveKinematics(kTrackWidthMeters);
+
+
 
 
 
@@ -119,6 +122,8 @@ public static final int
 nathan = 0, gio = 1, daniel = 2,                                // controller ports
 
 leftDriveAxis = 1, rightDriveAxis = 5,                          // controller axis 
+
+fowardsAxis = 1, turnAxis = 0,
 
 
 
